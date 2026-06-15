@@ -24,7 +24,7 @@ export default function AdminLogin() {
   }, []);
 
   const [, setLocation] = useLocation();
-  const { login, isLoading } = useAuth();
+  const { login, isLoading = false } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -217,4 +217,4 @@ export default function AdminLogin() {
       </div>
     </div>
   );
-  }
+}
