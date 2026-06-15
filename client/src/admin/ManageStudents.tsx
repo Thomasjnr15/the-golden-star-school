@@ -107,48 +107,36 @@ export default function ManageStudents() {
     }
 
     try {
-      // ⚠️ SECURITY: VITE_SUPABASE_SERVICE_KEY is visible in the browser bundle.
-      // For production, move student creation to a Supabase Edge Function.
-      // See supabase/README.md for instructions.
-      const serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY;
-      if (!serviceKey) { toast.error('VITE_SUPABASE_SERVICE_KEY not configured'); return; }
-
-      const { createClient } = await import('@supabase/supabase-js');
-      const adminClient = createClient(
-        import.meta.env.VITE_SUPABASE_URL, serviceKey,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
-      const email = `gss_${addForm.registrationNumber.replace(/\//g, '_')}@goldenstarschool.internal`;
-      const { data: authData, error: authErr } = await adminClient.auth.admin.createUser({
-        email, password: addForm.password,
-        email_confirm: true,
-        user_metadata: { role: 'student', full_name: addForm.fullName },
-      });
-      if (authErr) { toast.error('Auth error: ' + authErr.message); return; }
-
-      const { error: insErr } = await supabase.from('students').insert([{
-        user_id: authData.user.id,
-        full_name: addForm.fullName,
-        registration_number: addForm.registrationNumber,
-        class: addForm.class,
-        stream: addForm.stream || null,
-      }]);
-      if (insErr) { toast.error('Student record error: ' + insErr.message); return; }
-
-      // Auto-assign compulsory subjects if SSS
-      if (SSS_CLASSES.includes(addForm.class) && addForm.stream) {
-        const { data: newStudent } = await supabase
-          .from('students').select('id').eq('user_id', authData.user.id).single();
-        if (newStudent) {
-          await supabase.rpc('auto_assign_stream_subjects', {
-            p_student_id: newStudent.id,
-            p_stream: addForm.stream,
-            p_assigned_by: user?.id,
-          });
-        }
+      // Get session and access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        toast.error('Authentication required');
+        return;
       }
 
-      toast.success(`Student added! Login: ${email}`);
+      // Call API route
+      const response = await fetch('/api/create-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          registrationNumber: addForm.registrationNumber,
+          fullName: addForm.fullName,
+          password: addForm.password,
+          class: addForm.class,
+          stream: addForm.stream || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create student');
+      }
+
+      const result = await response.json();
+      toast.success(`Student added! Login: ${result.email}`);
       setAddForm({ registrationNumber: '', fullName: '', class: '', stream: '', password: '' });
       setShowAddDialog(false);
       fetchStudents();

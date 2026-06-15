@@ -90,43 +90,38 @@ export default function RegistrationRequests() {
 
     setApproving(true);
     try {
-      // ⚠️ SECURITY: VITE_SUPABASE_SERVICE_KEY is visible in the browser bundle.
-      // For production, move student creation to a Supabase Edge Function.
-      // See supabase/README.md for instructions.
-      const serviceKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY;
-      if (!serviceKey) { toast.error('VITE_SUPABASE_SERVICE_KEY not configured'); setApproving(false); return; }
+      // Get session and access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        toast.error('Authentication required');
+        setApproving(false);
+        return;
+      }
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const adminClient = createClient(
-        import.meta.env.VITE_SUPABASE_URL, serviceKey,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
-
-      const email = `gss_${approvalForm.registrationNumber.replace(/\//g, '_')}@goldenstarschool.internal`;
-      const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-        email,
-        password: approvalForm.password,
-        email_confirm: true,
-        user_metadata: { role: 'student', full_name: selectedRequest.full_name },
+      // Call API route
+      const response = await fetch('/api/create-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          requestId: selectedRequest.id,
+          registrationNumber: approvalForm.registrationNumber,
+          fullName: selectedRequest.full_name,
+          password: approvalForm.password,
+          class: approvalForm.assignedClass,
+          stream: approvalForm.assignedStream || null,
+        }),
       });
 
-      if (authError) { toast.error('Auth error: ' + authError.message); setApproving(false); return; }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve student');
+      }
 
-      // 2. Call approve_registration function (creates student record + auto-assigns subjects)
-      const { data: result, error: fnError } = await supabase.rpc('approve_registration', {
-        p_request_id: selectedRequest.id,
-        p_registration_number: approvalForm.registrationNumber,
-        p_class: approvalForm.assignedClass,
-        p_user_id: authData.user.id,
-        p_stream: approvalForm.assignedStream || null,
-      });
-
-      if (fnError) throw fnError;
-      if (result?.error) throw new Error(result.error);
-
-      toast.success(
-        `${selectedRequest.full_name} approved! Login: ${email}`
-      );
+      const result = await response.json();
+      toast.success(`${selectedRequest.full_name} approved! Login: ${result.email}`);
       setShowDetailsDialog(false);
       fetchRequests();
     } catch (err: any) {
