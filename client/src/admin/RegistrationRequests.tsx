@@ -80,7 +80,6 @@ export default function RegistrationRequests() {
     e.preventDefault();
     if (!selectedRequest) return;
 
-    // Validate
     if (!approvalForm.registrationNumber.trim()) { toast.error('Registration number required'); return; }
     if (!approvalForm.password.trim()) { toast.error('Initial password required'); return; }
     if (SSS_CLASSES.includes(approvalForm.assignedClass) && !approvalForm.assignedStream) {
@@ -90,7 +89,6 @@ export default function RegistrationRequests() {
 
     setApproving(true);
     try {
-      // Get session and access token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.access_token) {
         toast.error('Authentication required');
@@ -98,7 +96,6 @@ export default function RegistrationRequests() {
         return;
       }
 
-      // Call API route
       const response = await fetch('/api/create-student', {
         method: 'POST',
         headers: {
@@ -228,7 +225,6 @@ export default function RegistrationRequests() {
           </div>
         )}
 
-        {/* Details/Approval Dialog */}
         <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -237,28 +233,19 @@ export default function RegistrationRequests() {
             </DialogHeader>
             {selectedRequest && (
               <div className="space-y-6">
-                {/* Student info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><p className="text-muted-foreground">Student Name</p><p className="font-semibold">{selectedRequest.full_name}</p></div>
                   <div><p className="text-muted-foreground">Gender</p><p className="font-semibold">{selectedRequest.gender || '—'}</p></div>
                   <div><p className="text-muted-foreground">Date of Birth</p><p className="font-semibold">{selectedRequest.date_of_birth || '—'}</p></div>
                   <div><p className="text-muted-foreground">Class Applying</p><p className="font-semibold">{selectedRequest.class_applying}</p></div>
-                  {selectedRequest.requested_stream && (
-                    <div><p className="text-muted-foreground">Requested Stream</p><p className="font-semibold">{selectedRequest.requested_stream}</p></div>
-                  )}
                   <div><p className="text-muted-foreground">Previous School</p><p className="font-semibold">{selectedRequest.previous_school || '—'}</p></div>
                   <div><p className="text-muted-foreground">Parent Name</p><p className="font-semibold">{selectedRequest.parent_name}</p></div>
                   <div><p className="text-muted-foreground">Parent Phone</p><p className="font-semibold">{selectedRequest.parent_phone}</p></div>
-                  <div className="col-span-2"><p className="text-muted-foreground">Parent Email</p><p className="font-semibold">{selectedRequest.parent_email}</p></div>
-                  {selectedRequest.home_address && (
-                    <div className="col-span-2"><p className="text-muted-foreground">Address</p><p className="font-semibold">{selectedRequest.home_address}</p></div>
-                  )}
+                  <div><p className="text-muted-foreground">Parent Email</p><p className="font-semibold">{selectedRequest.parent_email}</p></div>
                 </div>
 
-                {/* Approval form */}
                 <form onSubmit={handleApproveRequest} className="space-y-4 border-t pt-4">
                   <h3 className="font-semibold">Approve Admission</h3>
-
                   <div>
                     <Label>Registration Number</Label>
                     <Input placeholder="e.g. GSS/2026/001"
@@ -266,9 +253,8 @@ export default function RegistrationRequests() {
                       onChange={e => setApprovalForm(f => ({ ...f, registrationNumber: e.target.value }))}
                       required />
                   </div>
-
                   <div>
-                    <Label>Assign Class <span className="text-muted-foreground text-xs">(admin may override)</span></Label>
+                    <Label>Assign Class</Label>
                     <Select value={approvalForm.assignedClass}
                       onValueChange={v => setApprovalForm(f => ({
                         ...f, assignedClass: v,
@@ -283,17 +269,9 @@ export default function RegistrationRequests() {
                       </SelectContent>
                     </Select>
                   </div>
-
                   {SSS_CLASSES.includes(approvalForm.assignedClass) && (
                     <div>
-                      <Label>
-                        Stream <span className="text-destructive">*</span>
-                        {selectedRequest.requested_stream && (
-                          <span className="text-muted-foreground ml-2 text-xs">
-                            (applicant requested: {selectedRequest.requested_stream})
-                          </span>
-                        )}
-                      </Label>
+                      <Label>Stream <span className="text-destructive">*</span></Label>
                       <Select value={approvalForm.assignedStream}
                         onValueChange={v => setApprovalForm(f => ({ ...f, assignedStream: v }))}>
                         <SelectTrigger><SelectValue placeholder="Select stream…" /></SelectTrigger>
@@ -303,7 +281,6 @@ export default function RegistrationRequests() {
                       </Select>
                     </div>
                   )}
-
                   <div>
                     <Label>Initial Password</Label>
                     <Input type="password" placeholder="Set a password for the student"
@@ -311,11 +288,10 @@ export default function RegistrationRequests() {
                       onChange={e => setApprovalForm(f => ({ ...f, password: e.target.value }))}
                       required />
                   </div>
-
                   <div className="flex gap-2 justify-end">
                     <Button type="button" variant="outline"
-                      onClick={() => { setShowDetailsDialog(false); handleRejectRequest(selectedRequest.id, selectedRequest.full_name); }}>
-                      Reject
+                      onClick={() => setShowDetailsDialog(false)}>
+                      Cancel
                     </Button>
                     <Button type="submit" disabled={approving}>
                       {approving ? 'Approving…' : 'Approve & Create Account'}
@@ -327,6 +303,3 @@ export default function RegistrationRequests() {
           </DialogContent>
         </Dialog>
       </CardContent>
-    </Card>
-  );
-}
