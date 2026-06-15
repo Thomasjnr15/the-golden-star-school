@@ -34,7 +34,6 @@ export default function RegistrationRequests() {
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'pending' | 'all'>('pending');
-
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [approvalForm, setApprovalForm] = useState({
@@ -45,7 +44,9 @@ export default function RegistrationRequests() {
   });
   const [approving, setApproving] = useState(false);
 
-  useEffect(() => { fetchRequests(); }, [filterStatus]);
+  useEffect(() => {
+    fetchRequests();
+  }, [filterStatus]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -79,9 +80,14 @@ export default function RegistrationRequests() {
   const handleApproveRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRequest) return;
-
-    if (!approvalForm.registrationNumber.trim()) { toast.error('Registration number required'); return; }
-    if (!approvalForm.password.trim()) { toast.error('Initial password required'); return; }
+    if (!approvalForm.registrationNumber.trim()) {
+      toast.error('Registration number required');
+      return;
+    }
+    if (!approvalForm.password.trim()) {
+      toast.error('Initial password required');
+      return;
+    }
     if (SSS_CLASSES.includes(approvalForm.assignedClass) && !approvalForm.assignedStream) {
       toast.error('Stream is required for SSS classes');
       return;
@@ -134,14 +140,21 @@ export default function RegistrationRequests() {
       .from('registration_requests')
       .update({ status: 'rejected', reviewed_at: new Date().toISOString() })
       .eq('id', id);
-    if (error) { toast.error('Failed to reject: ' + error.message); return; }
+    if (error) {
+      toast.error('Failed to reject: ' + error.message);
+      return;
+    }
     toast.success('Request rejected');
     fetchRequests();
   };
 
   const statusBadge = (status: string) => {
-    if (status === 'approved') return <Badge className="bg-green-100 text-green-800 border-green-200">Approved</Badge>;
-    if (status === 'rejected') return <Badge variant="destructive">Rejected</Badge>;
+    if (status === 'approved') {
+      return <Badge className="bg-green-100 text-green-800 border-green-200">Approved</Badge>;
+    }
+    if (status === 'rejected') {
+      return <Badge variant="destructive">Rejected</Badge>;
+    }
     return <Badge variant="secondary">Pending</Badge>;
   };
 
@@ -151,10 +164,14 @@ export default function RegistrationRequests() {
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>Registration Requests</CardTitle>
-            <CardDescription>Review and approve new student admission applications.</CardDescription>
+            <CardDescription>
+              Review and approve new student admission applications.
+            </CardDescription>
           </div>
           <Select value={filterStatus} onValueChange={v => setFilterStatus(v as any)}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="pending">Pending Only</SelectItem>
               <SelectItem value="all">All Requests</SelectItem>
@@ -162,6 +179,7 @@ export default function RegistrationRequests() {
           </Select>
         </div>
       </CardHeader>
+
       <CardContent>
         {loading ? (
           <p className="text-center text-muted-foreground py-6">Loading requests…</p>
@@ -176,8 +194,8 @@ export default function RegistrationRequests() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Student Name</TableHead>
-                  <TableHead>Class Applying</TableHead>
-                  <TableHead>Stream Requested</TableHead>
+                  <TableHead>Class</TableHead>
+                  <TableHead>Stream</TableHead>
                   <TableHead>Parent</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
@@ -201,18 +219,21 @@ export default function RegistrationRequests() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <p className="text-sm">{req.parent_name}</p>
-                        <p className="text-xs text-muted-foreground">{req.parent_phone}</p>
-                      </div>
+                      <p className="text-sm">{req.parent_name}</p>
+                      <p className="text-xs text-muted-foreground">{req.parent_phone}</p>
                     </TableCell>
                     <TableCell>{statusBadge(req.status)}</TableCell>
                     <TableCell className="text-center">
                       {req.status === 'pending' && (
                         <div className="flex gap-1 justify-center">
-                          <Button size="sm" onClick={() => openReviewDialog(req)}>Review</Button>
-                          <Button size="sm" variant="destructive"
-                            onClick={() => handleRejectRequest(req.id, req.full_name)}>
+                          <Button size="sm" onClick={() => openReviewDialog(req)}>
+                            Review
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleRejectRequest(req.id, req.full_name)}
+                          >
                             Reject
                           </Button>
                         </div>
@@ -229,41 +250,78 @@ export default function RegistrationRequests() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Review Registration Request</DialogTitle>
-              <DialogDescription>Approve or reject this student admission application.</DialogDescription>
+              <DialogDescription>
+                Approve or reject this student admission application.
+              </DialogDescription>
             </DialogHeader>
             {selectedRequest && (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><p className="text-muted-foreground">Student Name</p><p className="font-semibold">{selectedRequest.full_name}</p></div>
-                  <div><p className="text-muted-foreground">Gender</p><p className="font-semibold">{selectedRequest.gender || '—'}</p></div>
-                  <div><p className="text-muted-foreground">Date of Birth</p><p className="font-semibold">{selectedRequest.date_of_birth || '—'}</p></div>
-                  <div><p className="text-muted-foreground">Class Applying</p><p className="font-semibold">{selectedRequest.class_applying}</p></div>
-                  <div><p className="text-muted-foreground">Previous School</p><p className="font-semibold">{selectedRequest.previous_school || '—'}</p></div>
-                  <div><p className="text-muted-foreground">Parent Name</p><p className="font-semibold">{selectedRequest.parent_name}</p></div>
-                  <div><p className="text-muted-foreground">Parent Phone</p><p className="font-semibold">{selectedRequest.parent_phone}</p></div>
-                  <div><p className="text-muted-foreground">Parent Email</p><p className="font-semibold">{selectedRequest.parent_email}</p></div>
+                  <div>
+                    <p className="text-muted-foreground">Student Name</p>
+                    <p className="font-semibold">{selectedRequest.full_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Gender</p>
+                    <p className="font-semibold">{selectedRequest.gender || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Date of Birth</p>
+                    <p className="font-semibold">{selectedRequest.date_of_birth || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Class Applying</p>
+                    <p className="font-semibold">{selectedRequest.class_applying}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Previous School</p>
+                    <p className="font-semibold">{selectedRequest.previous_school || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Parent Name</p>
+                    <p className="font-semibold">{selectedRequest.parent_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Parent Phone</p>
+                    <p className="font-semibold">{selectedRequest.parent_phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Parent Email</p>
+                    <p className="font-semibold">{selectedRequest.parent_email}</p>
+                  </div>
                 </div>
 
                 <form onSubmit={handleApproveRequest} className="space-y-4 border-t pt-4">
                   <h3 className="font-semibold">Approve Admission</h3>
                   <div>
                     <Label>Registration Number</Label>
-                    <Input placeholder="e.g. GSS/2026/001"
+                    <Input
+                      placeholder="e.g. GSS/2026/001"
                       value={approvalForm.registrationNumber}
                       onChange={e => setApprovalForm(f => ({ ...f, registrationNumber: e.target.value }))}
-                      required />
+                      required
+                    />
                   </div>
                   <div>
                     <Label>Assign Class</Label>
-                    <Select value={approvalForm.assignedClass}
+                    <Select
+                      value={approvalForm.assignedClass}
                       onValueChange={v => setApprovalForm(f => ({
-                        ...f, assignedClass: v,
+                        ...f,
+                        assignedClass: v,
                         assignedStream: SSS_CLASSES.includes(v) ? f.assignedStream : '',
-                      }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        {['Nursery 1','Nursery 2','Primary 1','Primary 2','Primary 3','Primary 4','Primary 5','Primary 6',
-                          'JSS 1','JSS 2','JSS 3','SSS 1','SSS 2','SSS 3'].map(c => (
+                        {[
+                          'Nursery 1', 'Nursery 2',
+                          'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6',
+                          'JSS 1', 'JSS 2', 'JSS 3',
+                          'SSS 1', 'SSS 2', 'SSS 3',
+                        ].map(c => (
                           <SelectItem key={c} value={c}>{c}</SelectItem>
                         ))}
                       </SelectContent>
@@ -272,25 +330,37 @@ export default function RegistrationRequests() {
                   {SSS_CLASSES.includes(approvalForm.assignedClass) && (
                     <div>
                       <Label>Stream <span className="text-destructive">*</span></Label>
-                      <Select value={approvalForm.assignedStream}
-                        onValueChange={v => setApprovalForm(f => ({ ...f, assignedStream: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select stream…" /></SelectTrigger>
+                      <Select
+                        value={approvalForm.assignedStream}
+                        onValueChange={v => setApprovalForm(f => ({ ...f, assignedStream: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select stream…" />
+                        </SelectTrigger>
                         <SelectContent>
-                          {STREAMS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                          {STREAMS.map(s => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   )}
                   <div>
                     <Label>Initial Password</Label>
-                    <Input type="password" placeholder="Set a password for the student"
+                    <Input
+                      type="password"
+                      placeholder="Set a password for the student"
                       value={approvalForm.password}
                       onChange={e => setApprovalForm(f => ({ ...f, password: e.target.value }))}
-                      required />
+                      required
+                    />
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button type="button" variant="outline"
-                      onClick={() => setShowDetailsDialog(false)}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowDetailsDialog(false)}
+                    >
                       Cancel
                     </Button>
                     <Button type="submit" disabled={approving}>
