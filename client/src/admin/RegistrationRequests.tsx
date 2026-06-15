@@ -303,3 +303,6 @@ export default function RegistrationRequests() {
           </DialogContent>
         </Dialog>
       </CardContent>
+    </Card>
+  );
+}
