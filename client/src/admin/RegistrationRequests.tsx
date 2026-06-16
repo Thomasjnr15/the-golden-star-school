@@ -92,7 +92,6 @@ export default function RegistrationRequests() {
       toast.error('Stream is required for SSS classes');
       return;
     }
-
     setApproving(true);
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -101,7 +100,6 @@ export default function RegistrationRequests() {
         setApproving(false);
         return;
       }
-
       const response = await fetch('/api/create-student', {
         method: 'POST',
         headers: {
@@ -117,12 +115,10 @@ export default function RegistrationRequests() {
           stream: approvalForm.assignedStream || null,
         }),
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to approve student');
       }
-
       const result = await response.json();
       toast.success(`${selectedRequest.full_name} approved! Login: ${result.email}`);
       setShowDetailsDialog(false);
@@ -179,10 +175,9 @@ export default function RegistrationRequests() {
           </Select>
         </div>
       </CardHeader>
-
       <CardContent>
         {loading ? (
-          <p className="text-center text-muted-foreground py-6">Loading requests…</p>
+          <p className="text-center text-muted-foreground py-6">Loading...</p>
         ) : requests.length === 0 ? (
           <p className="text-center text-muted-foreground py-6">
             {filterStatus === 'pending' ? 'No pending requests.' : 'No requests found.'}
@@ -215,7 +210,7 @@ export default function RegistrationRequests() {
                       ) : SSS_CLASSES.includes(req.class_applying) ? (
                         <span className="text-xs text-muted-foreground">Not specified</span>
                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
+                        <span className="text-muted-foreground text-xs">-</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -229,11 +224,7 @@ export default function RegistrationRequests() {
                           <Button size="sm" onClick={() => openReviewDialog(req)}>
                             Review
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleRejectRequest(req.id, req.full_name)}
-                          >
+                          <Button size="sm" variant="destructive" onClick={() => handleRejectRequest(req.id, req.full_name)}>
                             Reject
                           </Button>
                         </div>
@@ -245,7 +236,6 @@ export default function RegistrationRequests() {
             </Table>
           </div>
         )}
-
         <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -263,11 +253,11 @@ export default function RegistrationRequests() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Gender</p>
-                    <p className="font-semibold">{selectedRequest.gender || '—'}</p>
+                    <p className="font-semibold">{selectedRequest.gender || '-'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Date of Birth</p>
-                    <p className="font-semibold">{selectedRequest.date_of_birth || '—'}</p>
+                    <p className="font-semibold">{selectedRequest.date_of_birth || '-'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Class Applying</p>
@@ -275,7 +265,7 @@ export default function RegistrationRequests() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Previous School</p>
-                    <p className="font-semibold">{selectedRequest.previous_school || '—'}</p>
+                    <p className="font-semibold">{selectedRequest.previous_school || '-'}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Parent Name</p>
@@ -290,7 +280,6 @@ export default function RegistrationRequests() {
                     <p className="font-semibold">{selectedRequest.parent_email}</p>
                   </div>
                 </div>
-
                 <form onSubmit={handleApproveRequest} className="space-y-4 border-t pt-4">
                   <h3 className="font-semibold">Approve Admission</h3>
                   <div>
@@ -318,7 +307,8 @@ export default function RegistrationRequests() {
                       <SelectContent>
                         {[
                           'Nursery 1', 'Nursery 2',
-                          'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6',
+                          'Primary 1', 'Primary 2', 'Primary 3',
+                          'Primary 4', 'Primary 5', 'Primary 6',
                           'JSS 1', 'JSS 2', 'JSS 3',
                           'SSS 1', 'SSS 2', 'SSS 3',
                         ].map(c => (
@@ -329,13 +319,13 @@ export default function RegistrationRequests() {
                   </div>
                   {SSS_CLASSES.includes(approvalForm.assignedClass) && (
                     <div>
-                      <Label>Stream <span className="text-destructive">*</span></Label>
+                      <Label>Stream *</Label>
                       <Select
                         value={approvalForm.assignedStream}
                         onValueChange={v => setApprovalForm(f => ({ ...f, assignedStream: v }))}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select stream…" />
+                          <SelectValue placeholder="Select stream..." />
                         </SelectTrigger>
                         <SelectContent>
                           {STREAMS.map(s => (
@@ -356,15 +346,11 @@ export default function RegistrationRequests() {
                     />
                   </div>
                   <div className="flex gap-2 justify-end">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowDetailsDialog(false)}
-                    >
+                    <Button type="button" variant="outline" onClick={() => setShowDetailsDialog(false)}>
                       Cancel
                     </Button>
                     <Button type="submit" disabled={approving}>
-                      {approving ? 'Approving…' : 'Approve & Create Account'}
+                      {approving ? 'Approving...' : 'Approve & Create Account'}
                     </Button>
                   </div>
                 </form>
