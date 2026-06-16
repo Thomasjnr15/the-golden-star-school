@@ -6,16 +6,27 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY;
+
+    if (!supabaseUrl) {
+      return res.status(500).json({ error: 'Server misconfigured: SUPABASE_URL is not set in Vercel environment variables.' });
+    }
+    if (!supabaseAnonKey) {
+      return res.status(500).json({ error: 'Server misconfigured: SUPABASE_ANON_KEY is not set in Vercel environment variables.' });
+    }
+    if (!supabaseServiceKey) {
+      return res.status(500).json({ error: 'Server misconfigured: SUPABASE_SERVICE_ROLE_KEY is not set in Vercel environment variables.' });
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Missing or invalid Authorization header' });
     }
     const accessToken = authHeader.split(' ')[1];
 
-    const anonClient = createClient(
-      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
-      (process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY)!
-    );
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
 
     const { data: { user }, error: authError } = await anonClient.auth.getUser(accessToken);
     if (authError || !user) {
@@ -46,8 +57,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const serviceClient = createClient(
-      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
-      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY)!,
+      supabaseUrl,
+      supabaseServiceKey,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
@@ -118,6 +129,6 @@ export default async function handler(req: any, res: any) {
 
   } catch (error: any) {
     console.error('Error in create-student:', error);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: `Unexpected server error: ${error?.message || String(error)}` });
   }
 }
