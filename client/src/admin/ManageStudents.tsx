@@ -56,19 +56,16 @@ export default function ManageStudents() {
   const [filterClass, setFilterClass] = useState('');
   const [filterStream, setFilterStream] = useState('');
 
-  // Add student
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addForm, setAddForm] = useState({
     registrationNumber: '', fullName: '', class: '', stream: '', password: '',
   });
 
-  // Stream change
   const [showStreamDialog, setShowStreamDialog] = useState(false);
   const [streamStudent, setStreamStudent] = useState<Student | null>(null);
   const [newStream, setNewStream] = useState<Stream | ''>('');
   const [streamChanging, setStreamChanging] = useState(false);
 
-  // Student subjects
   const [showSubjectsDialog, setShowSubjectsDialog] = useState(false);
   const [subjectsStudent, setSubjectsStudent] = useState<Student | null>(null);
   const [studentSubjects, setStudentSubjects] = useState<StudentSubject[]>([]);
@@ -96,7 +93,6 @@ export default function ManageStudents() {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate stream
     if (SSS_CLASSES.includes(addForm.class) && !addForm.stream) {
       toast.error('Stream is required for SSS classes');
       return;
@@ -105,17 +101,18 @@ export default function ManageStudents() {
       toast.error('Stream must not be set for non-SSS classes');
       return;
     }
-
+    if (addForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     try {
-      // Get session and access token
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.access_token) {
-        toast.error('Authentication required');
+        toast.error('Authentication required. Please log in again.');
         return;
       }
-
-      // Call API route
-      const response = await fetch('/api/create-student', {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-student`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,14 +126,11 @@ export default function ManageStudents() {
           stream: addForm.stream || null,
         }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create student');
-      }
-
       const result = await response.json();
-      toast.success(`Student added! Login: ${result.email}`);
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create student');
+      }
+      toast.success(`Student added! Login: ${addForm.registrationNumber}`);
       setAddForm({ registrationNumber: '', fullName: '', class: '', stream: '', password: '' });
       setShowAddDialog(false);
       fetchStudents();
@@ -236,7 +230,6 @@ export default function ManageStudents() {
     return matchSearch && matchClass && matchStream;
   });
 
-  // Subjects not yet actively assigned to this student
   const unassignedForStudent = allSubjects.filter(
     sub => !studentSubjects.some(ss => ss.subject_id === sub.id && ss.is_active)
   );
@@ -295,8 +288,12 @@ export default function ManageStudents() {
                   )}
                   <div>
                     <Label>Initial Password</Label>
-                    <Input type="password" value={addForm.password}
+                    <Input type="password" placeholder="Min 6 characters"
+                      value={addForm.password}
                       onChange={e => setAddForm(f => ({ ...f, password: e.target.value }))} required />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Student logs in with registration number + this password.
+                    </p>
                   </div>
                   <Button type="submit" className="w-full">Add Student</Button>
                 </form>
@@ -305,9 +302,8 @@ export default function ManageStudents() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Filters */}
           <div className="flex gap-3 flex-wrap">
-            <Input placeholder="Search name or reg number…"
+            <Input placeholder="Search name or reg number..."
               value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
               className="flex-1 min-w-48" />
             <Select value={filterClass} onValueChange={setFilterClass}>
@@ -330,9 +326,8 @@ export default function ManageStudents() {
             </Select>
           </div>
 
-          {/* Table */}
           {loading ? (
-            <p className="text-center text-muted-foreground py-6">Loading…</p>
+            <p className="text-center text-muted-foreground py-6">Loading...</p>
           ) : filteredStudents.length === 0 ? (
             <p className="text-center text-muted-foreground py-6">No students found.</p>
           ) : (
@@ -359,12 +354,11 @@ export default function ManageStudents() {
                         ) : SSS_CLASSES.includes(student.class) ? (
                           <Badge variant="destructive" className="text-xs">Unassigned</Badge>
                         ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
+                          <span className="text-muted-foreground text-xs">-</span>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 justify-center flex-wrap">
-                          {/* Stream change button (SSS only) */}
                           {SSS_CLASSES.includes(student.class) && (
                             <Button size="sm" variant="outline"
                               className="flex items-center gap-1"
@@ -372,13 +366,11 @@ export default function ManageStudents() {
                               <RefreshCw className="w-3 h-3" /> Stream
                             </Button>
                           )}
-                          {/* Subjects button */}
                           <Button size="sm" variant="outline"
                             className="flex items-center gap-1"
                             onClick={() => openSubjectsDialog(student)}>
                             <BookOpen className="w-3 h-3" /> Subjects
                           </Button>
-                          {/* Delete */}
                           <Button size="sm" variant="destructive"
                             onClick={() => handleDeleteStudent(student)}>
                             Delete
@@ -394,7 +386,6 @@ export default function ManageStudents() {
         </CardContent>
       </Card>
 
-      {/* Stream Change Dialog */}
       <Dialog open={showStreamDialog} onOpenChange={setShowStreamDialog}>
         <DialogContent>
           <DialogHeader>
@@ -424,14 +415,13 @@ export default function ManageStudents() {
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowStreamDialog(false)}>Cancel</Button>
               <Button onClick={handleChangeStream} disabled={streamChanging || !newStream || newStream === streamStudent?.stream}>
-                {streamChanging ? 'Changing…' : 'Change Stream'}
+                {streamChanging ? 'Changing...' : 'Change Stream'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Student Subjects Dialog */}
       <Dialog open={showSubjectsDialog} onOpenChange={setShowSubjectsDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -445,14 +435,13 @@ export default function ManageStudents() {
           </DialogHeader>
           <div className="space-y-4 pt-2">
             {subjectsLoading ? (
-              <p className="text-center text-muted-foreground">Loading…</p>
+              <p className="text-center text-muted-foreground">Loading...</p>
             ) : (
               <>
-                {/* Assign optional subject */}
                 <div className="flex gap-2">
                   <Select value={subjectToAdd} onValueChange={setSubjectToAdd}>
                     <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Assign optional subject…" />
+                      <SelectValue placeholder="Assign optional subject..." />
                     </SelectTrigger>
                     <SelectContent>
                       {unassignedForStudent.map(s => (
@@ -463,7 +452,6 @@ export default function ManageStudents() {
                   <Button onClick={handleAddSubjectToStudent} disabled={!subjectToAdd}>Assign</Button>
                 </div>
 
-                {/* Assigned subjects */}
                 {studentSubjects.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">No subjects assigned yet.</p>
                 ) : (
@@ -477,8 +465,8 @@ export default function ManageStudents() {
                     </TableHeader>
                     <TableBody>
                       {studentSubjects.map(ss => (
-                        <TableRow key={ss.id} className={!ss.is_active ? 'opacity-50' : ''}>
-                          <TableCell className="font-medium">{(ss.subject as any)?.name}</TableCell>
+                        <TableRow key={ss.id}>
+                          <TableCell>{ss.subject?.name || ss.subject_id}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {new Date(ss.assigned_at).toLocaleDateString()}
                           </TableCell>
