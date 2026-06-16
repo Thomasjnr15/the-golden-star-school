@@ -10,7 +10,7 @@ import { Eye, EyeOff, GraduationCap } from 'lucide-react';
 
 export default function StudentLogin() {
   const [, setLocation] = useLocation();
-  const { login, isLoading } = useAuth();
+  const { login, isLoading = false } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
