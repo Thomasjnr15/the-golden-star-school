@@ -13,8 +13,8 @@ export default async function handler(req: any, res: any) {
     const accessToken = authHeader.split(' ')[1];
 
     const anonClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_ANON_KEY!
+      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+      (process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY)!
     );
 
     const { data: { user }, error: authError } = await anonClient.auth.getUser(accessToken);
@@ -46,8 +46,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const serviceClient = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL)!,
+      (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_KEY)!,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
