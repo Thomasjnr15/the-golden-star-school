@@ -49,8 +49,6 @@ export default function AdminLogin() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', fontFamily: "'DM Sans',system-ui,sans-serif" }}>
-
-      {/* LEFT PANEL */}
       <div
         style={{
           width: '42%',
@@ -67,7 +65,6 @@ export default function AdminLogin() {
       >
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 60% at 40% 40%, rgba(74,124,40,.25) 0%, transparent 65%)', zIndex: 0 }} />
         <div style={{ position: 'absolute', inset: 0, opacity: 0.04, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: '200px', zIndex: 0 }} />
-
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', color: '#F7F4EE' }}>
           <div
             style={{
@@ -87,16 +84,13 @@ export default function AdminLogin() {
               <img src={schoolLogo} alt={schoolName} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : '⭐'}
           </div>
-
           <h1 style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 32, fontWeight: 700, lineHeight: 1.15, marginBottom: 12 }}>
             Admin<br />
             <em style={{ fontStyle: 'italic', color: '#A8D878' }}>Portal</em>
           </h1>
-
           <p style={{ fontSize: 14, color: 'rgba(247,244,238,.5)', lineHeight: 1.7, maxWidth: 240, margin: '0 auto 36px' }}>
             School management tools for administrators only.
           </p>
-
           {[
             ['👥', 'Manage Students & Admissions'],
             ['📋', 'Create & Manage Exams'],
@@ -113,10 +107,8 @@ export default function AdminLogin() {
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', background: '#fff', padding: '40px 24px' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
-
           <div className="flex lg:hidden" style={{ justifyContent: 'center', marginBottom: 28 }}>
             <div
               style={{
@@ -135,7 +127,6 @@ export default function AdminLogin() {
               ) : '⭐'}
             </div>
           </div>
-
           <div style={{ marginBottom: 32 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: '#4A7C28', marginBottom: 8 }}>
               <Shield size={12} />
@@ -146,7 +137,6 @@ export default function AdminLogin() {
             </h2>
             <p style={{ fontSize: 14, color: '#718096' }}>Enter your admin email and password</p>
           </div>
-
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
               <Label htmlFor="email" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#2D3748', marginBottom: 6 }}>
@@ -163,7 +153,6 @@ export default function AdminLogin() {
                 className="gss-input"
               />
             </div>
-
             <div>
               <Label htmlFor="password" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#2D3748', marginBottom: 6 }}>
                 Password
@@ -188,7 +177,6 @@ export default function AdminLogin() {
                 </button>
               </div>
             </div>
-
             <button
               type="submit"
               disabled={loading || isLoading}
@@ -198,12 +186,11 @@ export default function AdminLogin() {
               {loading || isLoading ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                   <span className="animate-spin-slow" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.4)', borderTop: '2px solid #fff', borderRadius: '50%', display: 'inline-block' }} />
-                  Signing in…
+                  Signing in...
                 </span>
               ) : 'Sign In →'}
             </button>
           </form>
-
           <div style={{ marginTop: 24, textAlign: 'center' }}>
             <button
               onClick={() => setLocation('/')}
@@ -212,7 +199,6 @@ export default function AdminLogin() {
               ← Back to main website
             </button>
           </div>
-
         </div>
       </div>
     </div>
