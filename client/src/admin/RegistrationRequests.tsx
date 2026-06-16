@@ -80,6 +80,7 @@ export default function RegistrationRequests() {
   const handleApproveRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRequest) return;
+
     if (!approvalForm.registrationNumber.trim()) {
       toast.error('Registration number required');
       return;
@@ -88,19 +89,27 @@ export default function RegistrationRequests() {
       toast.error('Initial password required');
       return;
     }
+    if (approvalForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     if (SSS_CLASSES.includes(approvalForm.assignedClass) && !approvalForm.assignedStream) {
       toast.error('Stream is required for SSS classes');
       return;
     }
+
     setApproving(true);
+
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError || !session?.access_token) {
-        toast.error('Authentication required');
+        toast.error('Authentication required. Please log in again.');
         setApproving(false);
         return;
       }
-      const response = await fetch('/api/create-student', {
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-student`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,14 +124,17 @@ export default function RegistrationRequests() {
           stream: approvalForm.assignedStream || null,
         }),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to approve student');
-      }
+
       const result = await response.json();
-      toast.success(`${selectedRequest.full_name} approved! Login: ${result.email}`);
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to approve student');
+      }
+
+      toast.success(`✅ ${selectedRequest.full_name} approved! Login: ${approvalForm.registrationNumber}`);
       setShowDetailsDialog(false);
       fetchRequests();
+
     } catch (err: any) {
       toast.error('Approval failed: ' + err.message);
     } finally {
@@ -236,6 +248,7 @@ export default function RegistrationRequests() {
             </Table>
           </div>
         )}
+
         <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -280,6 +293,7 @@ export default function RegistrationRequests() {
                     <p className="font-semibold">{selectedRequest.parent_email}</p>
                   </div>
                 </div>
+
                 <form onSubmit={handleApproveRequest} className="space-y-4 border-t pt-4">
                   <h3 className="font-semibold">Approve Admission</h3>
                   <div>
@@ -339,18 +353,21 @@ export default function RegistrationRequests() {
                     <Label>Initial Password</Label>
                     <Input
                       type="password"
-                      placeholder="Set a password for the student"
+                      placeholder="Min 6 characters e.g. Student@123"
                       value={approvalForm.password}
                       onChange={e => setApprovalForm(f => ({ ...f, password: e.target.value }))}
                       required
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Student logs in with registration number + this password.
+                    </p>
                   </div>
                   <div className="flex gap-2 justify-end">
                     <Button type="button" variant="outline" onClick={() => setShowDetailsDialog(false)}>
                       Cancel
                     </Button>
                     <Button type="submit" disabled={approving}>
-                      {approving ? 'Approving...' : 'Approve & Create Account'}
+                      {approving ? 'Creating Account...' : 'Approve & Create Account'}
                     </Button>
                   </div>
                 </form>
