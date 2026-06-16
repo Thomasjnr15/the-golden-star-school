@@ -113,11 +113,12 @@ export default function ManageStudents() {
       }
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const response = await fetch(`${supabaseUrl}/functions/v1/create-student`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session.access_token}`,
+    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+  },
         body: JSON.stringify({
           registrationNumber: addForm.registrationNumber,
           fullName: addForm.fullName,
