@@ -40,7 +40,7 @@ const NAV = [
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
-  const { user, logout, role } = useAuth();
+  const { user, logout, role, isLoading = false } = useAuth();
   const [active, setActive] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
